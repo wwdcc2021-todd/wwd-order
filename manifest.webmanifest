@@ -1,0 +1,19 @@
+{
+  "name": "WWD Order Team",
+  "short_name": "WWD Order",
+  "description": "五味鼎 WWD Order Team 叫貨",
+  "lang": "zh-Hant",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#1f4e79",
+  "theme_color": "#1f4e79",
+  "icons": [
+    { "src": "apple-touch-icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

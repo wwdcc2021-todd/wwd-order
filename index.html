@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WWD Order">
+<meta name="application-name" content="WWD Order">
+<meta name="theme-color" content="#1f4e79">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>WWD Order</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1f4e79; overscroll-behavior: none; }
+  /* Full-viewport iframe. On iPhone (black-translucent status bar) the page runs under the status bar / notch,
+     so the frame starts below the top safe area and respects left/right insets in landscape.
+     Outside iOS standalone env() = 0, so the frame is exactly inset 0, 100vw x 100dvh. */
+  #app {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: env(safe-area-inset-left, 0px);
+    right: env(safe-area-inset-right, 0px);
+    bottom: 0;
+    width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    height: calc(100vh - env(safe-area-inset-top, 0px));
+    height: calc(100dvh - env(safe-area-inset-top, 0px));
+    border: 0; margin: 0; padding: 0; display: block; background: #fff;
+  }
+  #msg { display: none; position: fixed; inset: 0; color: #fff; font: 16px/1.5 -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
+         padding: calc(24px + env(safe-area-inset-top, 0px)) 24px 24px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+<iframe id="app" title="WWD Order Team" allow="geolocation; clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>
+<div id="msg" role="alert"></div>
+<script>
+  /* ===================================================================================
+     EXEC_URL：部署 V75 之後，把下面這行換成 V75「新部署」的 exec 網址
+     （https://script.google.com/macros/s/……/exec），其他都不用改。
+     =================================================================================== */
+  var EXEC_URL = 'REPLACE_WITH_V75_EXEC_URL';
+
+  (function () {
+    var frame = document.getElementById('app');
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(EXEC_URL) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(EXEC_URL)) {
+      frame.style.display = 'none';
+      var m = document.getElementById('msg');
+      m.textContent = '尚未設定 EXEC_URL（請在 index.html 填入 V75 的 exec 網址）。';
+      m.style.display = 'block';
+      return;
+    }
+    frame.src = EXEC_URL;
+
+    /* V75 換頁橋接：App 頁面（在 Apps Script 的 googleusercontent iframe 裡）先送 {type:'wwd-shell-ping'}，
+       外殼回 {type:'wwd-shell-hello'}；之後 App 換頁改送 {type:'wwd-nav', url}，外殼只換 iframe，畫面維持全螢幕。
+       只接受來自 Apps Script 網域的訊息，而且網址必須是同一個 EXEC_URL（可帶 ?page=…&wwds=…）。 */
+    var base = EXEC_URL.split('?')[0];
+    var local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(EXEC_URL); // 只在本機測試時才接受 localhost
+    function okOrigin(o) {
+      return /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(o) ||
+             (local && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o));
+    }
+    function okUrl(u) {
+      if (typeof u !== 'string' || u.length > 4000) return false;
+      var i = u.indexOf('?'), b = i < 0 ? u : u.slice(0, i), q = i < 0 ? '' : u.slice(i);
+      return b === base && !/[#\s<>"']/.test(q);
+    }
+    window.addEventListener('message', function (ev) {
+      var d = ev.data;
+      if (!d || typeof d !== 'object' || !okOrigin(ev.origin)) return;
+      if (d.type === 'wwd-shell-ping') {
+        try { ev.source && ev.source.postMessage({ type: 'wwd-shell-hello' }, ev.origin); } catch (e) {}
+      } else if (d.type === 'wwd-nav' && okUrl(d.url)) {
+        frame.src = d.url;
+      }
+    });
+  })();
+</script>
+</body>
+</html>
